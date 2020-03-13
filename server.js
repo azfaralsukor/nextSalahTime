@@ -9,7 +9,7 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors());
 
-const now = new Date(new Date('2020-03-14T18:25:00Z'))//.getTime() + 480 * 60000);
+const now = new Date(new Date())//.getTime() + 480 * 60000);
 const ISOizeDate = date => new Date(`${now.toISOString().substring(0, now.toISOString().indexOf('T'))}T${date}Z`);
 const capitalizeFirstLetter = (string = "") => string.charAt(0).toUpperCase() + string.slice(1);
 const timeLeft = (next, current) => {
@@ -33,11 +33,10 @@ const constructMsg = (next, now, name, time) => {
     return `${left} left to ${capitalizeFirstLetter(name)} (${time.substring(0, 5)})`;
 }
 
-app.get('/:zone', async (req, res) => {
-    const { zone = "WLY01" } = req.params;
+app.get('/', async (req, res) => {
     const prayerTimes = ["fajr", "syuruk", "dhuhr", "asr", "maghrib", "isha"];
     const url = "https://www.e-solat.gov.my/index.php";
-    let params = { r: "esolatApi/TakwimSolat", period: "today", zone };
+    let params = { r: "esolatApi/TakwimSolat", period: "today", zone: "WLY01" };
     let i = 0;
     await axios.get(url, { params })
         .then(function (response) {
