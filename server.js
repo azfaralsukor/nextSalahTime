@@ -24,6 +24,7 @@ const timeLeft = (next, current) => {
 
 const constructMsg = (next, now, name, time) => {
     const { hourDiff, minDiff } = timeLeft(next, now);
+    return `${next.toString()} ${now.toString()} ${name} ${time}`
     if (!hourDiff && !minDiff) {
         return `It's ${capitalizeFirstLetter(name)} (${time.substring(0, 5)}) now.`;
     }
