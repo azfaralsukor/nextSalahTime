@@ -9,7 +9,7 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors());
 
-const now = new Date(new Date())//.getTime() + 480 * 60000);
+const now = new Date(new Date().getTime() + 480 * 60000);
 const ISOizeDate = date => new Date(`${now.toISOString().substring(0, now.toISOString().indexOf('T'))}T${date}Z`);
 const capitalizeFirstLetter = (string = "") => string.charAt(0).toUpperCase() + string.slice(1);
 const timeLeft = (next, current) => {
