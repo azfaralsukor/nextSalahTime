@@ -33,7 +33,7 @@ const constructMsg = (next, now, name, time) => {
     return `${left} left to ${capitalizeFirstLetter(name)} (${time.substring(0, 5)})`;
 }
 
-app.get('/:zone', async (req, res) => {
+app.get('/:zone?*', async (req, res) => {
     const { zone = "WLY01" } = req.params;
     const prayerTimes = ["fajr", "syuruk", "dhuhr", "asr", "maghrib", "isha"];
     const url = "https://www.e-solat.gov.my/index.php";
