@@ -30,8 +30,8 @@ const constructMsg = (next, name, time) => {
     if (!hourDiff && !minDiff) {
         return `It's ${data} now.`;
     }
-    const hourStr = `${hourDiff !== 0 ? `${hourDiff} hour${hourDiff > 1 ? "s" : ""}` : ""}`;
-    const minStr = `${minDiff !== 0 ? `${minDiff} minute${minDiff > 1 ? "s" : ""}` : ""}`;
+    const hourStr = `${hourDiff > 0 ? `${hourDiff} hour${hourDiff > 1 ? "s" : ""}` : ""}`;
+    const minStr = `${minDiff > 0 ? `${minDiff} minute${minDiff > 1 ? "s" : ""}` : ""}`;
     const left = hourStr && minStr ? `${hourStr} and ${minStr}` : hourStr ? hourStr : minStr;
     return `${left} left to ${data}`;
 }
