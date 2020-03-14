@@ -10,7 +10,9 @@ app.use(express.json());
 app.use(cors());
 
 const now = new Date(new Date().getTime() + 480 * 60000);
-const ISOizeDate = date => new Date(`${now.toISOString().substring(0, now.toISOString().indexOf('T'))}T${date}Z`);
+const prayerTimes = ["fajr", "syuruk", "dhuhr", "asr", "maghrib", "isha"];
+const params = { r: "esolatApi/TakwimSolat", period: "today", zone: "WLY01" };
+const ISOizeDate = (date, today = now) => new Date(`${today.toISOString().substring(0, today.toISOString().indexOf('T'))}T${date}Z`);
 const capitalizeFirstLetter = (string = "") => string.charAt(0).toUpperCase() + string.slice(1);
 const timeLeft = (next, current) => {
     let hourDiff = next.getHours() - current.getHours();
@@ -22,45 +24,51 @@ const timeLeft = (next, current) => {
     return { hourDiff, minDiff };
 }
 
-const constructMsg = (next, now, name, time) => {
+const constructMsg = (next, name, time) => {
     const { hourDiff, minDiff } = timeLeft(next, now);
+    const data = `${capitalizeFirstLetter(name)} (${time.substring(0, 5)})`;
     if (!hourDiff && !minDiff) {
-        return `It's ${capitalizeFirstLetter(name)} (${time.substring(0, 5)}) now.`;
+        return `It's ${data} now.`;
     }
-    const hourStr = `${hourDiff > 0 ? `${hourDiff} hour${hourDiff > 1 ? "s" : ""}` : ""}`;
-    const minStr = `${minDiff > 0 ? `${minDiff} minute${minDiff > 1 ? "s" : ""}` : ""}`;
+    const hourStr = `${hourDiff !== 0 ? `${hourDiff} hour${hourDiff > 1 ? "s" : ""}` : ""}`;
+    const minStr = `${minDiff !== 0 ? `${minDiff} minute${minDiff > 1 ? "s" : ""}` : ""}`;
     const left = hourStr && minStr ? `${hourStr} and ${minStr}` : hourStr ? hourStr : minStr;
-    return `${left} left to ${capitalizeFirstLetter(name)} (${time.substring(0, 5)})`;
+    return `${left} left to ${data}`;
+}
+
+const getJAKIM = async (params = { r: "esolatApi/TakwimSolat", period: "today", zone: "WLY01" }) => {
+    const url = "https://www.e-solat.gov.my/index.php";
+    let result = ''
+    await axios.get(url, { params }).then((res) => {
+        const { prayerTime } = res.data;
+        result = prayerTime[0];
+    })
+    return result;
 }
 
 app.get('/', async (req, res) => {
-    const prayerTimes = ["fajr", "syuruk", "dhuhr", "asr", "maghrib", "isha"];
-    const url = "https://www.e-solat.gov.my/index.php";
-    let params = { r: "esolatApi/TakwimSolat", period: "today", zone: "WLY01" };
+    let prayerTime = await getJAKIM();
     let i = 0;
-    await axios.get(url, { params })
-        .then(function (response) {
-            const { prayerTime } = response.data;
-            let prayerTimeISO;
-            while (i < prayerTimes.length) {
-                prayerTimeISO = ISOizeDate(prayerTime[0][prayerTimes[i]]);
-                if (prayerTimeISO >= now) {
-                    break;
-                }
-                i++;
-            }
-            if (i < prayerTimes.length) {
-                res.send(constructMsg(prayerTimeISO, now, prayerTimes[i], prayerTime[0][prayerTimes[i]]));
-            }
-        })
+    let prayerTimeISO;
+    while (i < prayerTimes.length) {
+        prayerTimeISO = ISOizeDate(prayerTime[prayerTimes[i]]);
+        if (prayerTimeISO >= now) {
+            res.send(constructMsg(prayerTimeISO, prayerTimes[i], prayerTime[prayerTimes[i]]));
+        }
+        i++;
+    }
+    const tommorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    prayerTime = await getJAKIM({ ...params, period: "date", date: tommorrow.toISOString().substring(0, tommorrow.toISOString().indexOf('T')) });
+    res.send(constructMsg(ISOizeDate(prayerTime[prayerTimes[0]], tommorrow), prayerTimes[0], prayerTime[prayerTimes[0]]));
+});
 
-    if (i >= prayerTimes.length) {
-        const tommorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
-        params = { ...params, period: "date", date: tommorrow.substring(0, tommorrow.indexOf('T')) }
-        axios.get(url, { params }).then(function (response) {
-            res.send(constructMsg(ISOizeDate(response.data.prayerTime[0][prayerTimes[0]]), now, prayerTimes[0], response.data.prayerTime[0][prayerTimes[0]]));
-        });
+app.get('/:name', async (req, res) => {
+    const { name } = req.params;
+    if (prayerTimes.includes(name)) {
+        const prayerTime = await getJAKIM();
+        res.send(prayerTime[name].substring(0, 5));
     }
 });
+
 
 app.listen(port, () => console.log(`Server listening on port: ${port}`));
