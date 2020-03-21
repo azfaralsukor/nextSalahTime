@@ -9,10 +9,9 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors());
 
-const now = new Date(new Date().getTime() + 480 * 60000);
 const prayerTimes = ["fajr", "syuruk", "dhuhr", "asr", "maghrib", "isha"];
 const params = { r: "esolatApi/TakwimSolat", period: "today", zone: "WLY01" };
-const ISOizeDate = (date, today = now) => new Date(`${today.toISOString().substring(0, today.toISOString().indexOf('T'))}T${date}Z`);
+const ISOizeDate = (date, today) => new Date(`${today.toISOString().substring(0, today.toISOString().indexOf('T'))}T${date}Z`);
 const capitalizeFirstLetter = (string = "") => string.charAt(0).toUpperCase() + string.slice(1);
 const timeLeft = (next, current) => {
     let hourDiff = next.getHours() - current.getHours();
@@ -24,7 +23,7 @@ const timeLeft = (next, current) => {
     return { hourDiff, minDiff };
 }
 
-const constructMsg = (next, name, time) => {
+const constructMsg = (next, name, time, now) => {
     const { hourDiff, minDiff } = timeLeft(next, now);
     const data = `${capitalizeFirstLetter(name)} (${time.substring(0, 5)})`;
     if (!hourDiff && !minDiff) {
@@ -47,19 +46,20 @@ const getJAKIM = async (params = { r: "esolatApi/TakwimSolat", period: "today", 
 }
 
 app.get('/', async (req, res) => {
+    const now = new Date(new Date().getTime() + 480 * 60000);
     let prayerTime = await getJAKIM();
     let i = 0;
     let prayerTimeISO;
     while (i < prayerTimes.length) {
-        prayerTimeISO = ISOizeDate(prayerTime[prayerTimes[i]]);
+        prayerTimeISO = ISOizeDate(prayerTime[prayerTimes[i]], now);
         if (prayerTimeISO >= now) {
-            res.send(constructMsg(prayerTimeISO, prayerTimes[i], prayerTime[prayerTimes[i]]));
+            res.send(constructMsg(prayerTimeISO, prayerTimes[i], prayerTime[prayerTimes[i]], now));
         }
         i++;
     }
     const tommorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     prayerTime = await getJAKIM({ ...params, period: "date", date: tommorrow.toISOString().substring(0, tommorrow.toISOString().indexOf('T')) });
-    res.send(constructMsg(ISOizeDate(prayerTime[prayerTimes[0]], tommorrow), prayerTimes[0], prayerTime[prayerTimes[0]]));
+    res.send(constructMsg(ISOizeDate(prayerTime[prayerTimes[0]], tommorrow), prayerTimes[0], prayerTime[prayerTimes[0]], now));
 });
 
 app.get('/:name', async (req, res) => {
