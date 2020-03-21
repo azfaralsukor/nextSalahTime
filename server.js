@@ -19,8 +19,12 @@ const timeLeft = (next, current) => {
     let hourDiff = _s ? next.getHours() - current.getHours() : current.getHours() - next.getHours();
     let minDiff = _s ? next.getMinutes() - current.getMinutes() : current.getMinutes() - next.getMinutes();
     if (_s && minDiff < 0) {
-        minDiff = 60 + minDiff;
+        minDiff += 60;
         hourDiff--;
+    }
+    
+    if (_s && hourDiff < 0) {
+        hourDiff += 24;
     }
 
     return { hourDiff, minDiff };
