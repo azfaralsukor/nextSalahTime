@@ -23,15 +23,6 @@ const timeLeft = (next, current) => {
         hourDiff--;
     }
 
-    console.log(next.getHours());
-    console.log(current.getHours());
-    
-    console.log(next);
-    console.log(current);
-    
-    console.log(hourDiff);
-    console.log(minDiff);
-
     return { hourDiff, minDiff };
 }
 
