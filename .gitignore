@@ -109,3 +109,7 @@ yarn.lock
 
 # Mac
 .DS_Store
+
+functions
+# Local Netlify folder
+.netlify

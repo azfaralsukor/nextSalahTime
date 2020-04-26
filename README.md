@@ -37,16 +37,19 @@ git clone https://github.com/azfaralsukor/nextSalahTime.git
 ```
 cd nextSalahTime
 yarn install
-npm start
+yarn start
 ```
 
 There you have it.
 
 ## Deployment
 
-Login or [create](https://signup.heroku.com/) a heroku account and press the button below to host as your own.
+Login or [create](https://app.netlify.com/signup) a Netlify account, then on your terminal run 
 
-[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+```
+npm install netlify-cli -g
+netlify deploy
+```
 
 ## Built With
 

@@ -1,13 +1,9 @@
-// require('dotenv').config();
-const express = require('express');
+const express = require("express");
+const serverless = require("serverless-http");
 const axios = require('axios');
-const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(express.json());
-app.use(cors());
+const router = express.Router();
 
 let now;
 const prayerTimes = ["fajr", "syuruk", "dhuhr", "asr", "maghrib", "isha"];
@@ -52,7 +48,7 @@ const getJAKIM = async (params = { r: "esolatApi/TakwimSolat", period: "today", 
     return result;
 }
 
-app.get('/', async (req, res) => {
+router.get('/', async (req, res) => {
     now = new Date(new Date().getTime() + 480 * 60000);
     let prayerTime = await getJAKIM();
     let i = 0;
@@ -60,16 +56,16 @@ app.get('/', async (req, res) => {
     while (i < prayerTimes.length) {
         prayerTimeISO = ISOizeDate(prayerTime[prayerTimes[i]]);
         if (prayerTimeISO >= now) {
-            res.send(constructMsg(prayerTimeISO, prayerTimes[i], prayerTime[prayerTimes[i]]));
+            return res.send(constructMsg(prayerTimeISO, prayerTimes[i], prayerTime[prayerTimes[i]]));
         }
         i++;
     }
     const tommorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     prayerTime = await getJAKIM({ ...params, period: "date", date: tommorrow.toISOString().substring(0, tommorrow.toISOString().indexOf('T')) });
-    res.send(constructMsg(ISOizeDate(prayerTime[prayerTimes[0]], tommorrow), prayerTimes[0], prayerTime[prayerTimes[0]]));
+    return res.send(constructMsg(ISOizeDate(prayerTime[prayerTimes[0]], tommorrow), prayerTimes[0], prayerTime[prayerTimes[0]]));
 });
 
-app.get('/:name/:details?', async (req, res) => {
+router.get('/:name/:details?', async (req, res) => {
     now = new Date(new Date().getTime() + 480 * 60000);
     const { name, details } = req.params;
     if (prayerTimes.includes(name)) {
@@ -81,5 +77,7 @@ app.get('/:name/:details?', async (req, res) => {
     }
 });
 
+app.use(`/.netlify/functions/api`, router);
 
-app.listen(port, () => console.log(`Server listening on port: ${port}`));
+module.exports = app;
+module.exports.handler = serverless(app);
